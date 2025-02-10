@@ -54,15 +54,10 @@ func (app *application) writeResponse(w http.ResponseWriter, data interface{}, h
 }
 
 func (app *application) writeError(w http.ResponseWriter, error interface{}, status int, header http.Header) error {
-	js, jsErr := json.Marshal(error)
-	if jsErr != nil {
-		return jsErr
-	}
-	app.logger.Println(error, string(js))
 
 	response := map[string]interface{}{
 		"status": "ERROR",
-		"data":   string(js),
+		"data":   error,
 	}
 
 	err := app.writeJSON(w, status, response, header)

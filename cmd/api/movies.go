@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"greenlight.hosseinnasiri.ir/internal/data"
 	"greenlight.hosseinnasiri.ir/internal/validator"
@@ -14,7 +13,7 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Title   string       `json:"title"`
 		Year    int32        `json:"year"`
 		Runtime data.Runtime `json:"runtime"`
-		Genres  data.Genres  `json:"genres"`
+		Genres  []string     `json:"genres"`
 	}
 	err := app.readJSON(w, r, &input)
 	if err != nil {
@@ -36,7 +35,20 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	fmt.Fprintf(w, "%+v\n", input)
+	err = app.models.Movies.Insert(movie)
+
+	if err != nil {
+		app.writeError(w, err.Error(), http.StatusInternalServerError, nil)
+	}
+
+	headers := make(http.Header)
+	headers.Set("Location", fmt.Sprintf("/v1/movies/%d", movie.ID))
+
+	err = app.writeJSON(w, http.StatusCreated, movie, headers)
+
+	if err != nil {
+		app.writeError(w, err.Error(), http.StatusInternalServerError, nil)
+	}
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {
@@ -48,19 +60,16 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Casablanca",
-		Runtime:   102,
-		Genres:    []string{"drama", "romance", "war"},
-		Version:   1,
+	movie, err := app.models.Movies.Get(id)
+
+	if err != nil {
+		app.writeError(w, err.Error(), http.StatusInternalServerError, nil)
+		return
 	}
 
 	err = app.writeResponse(w, movie, nil)
 
 	if err != nil {
-
 		errMsg := fmt.Errorf("the server encountered a problem and could not process your request. %s", err)
 		app.writeError(w, errMsg.Error(), http.StatusInternalServerError, nil)
 	}

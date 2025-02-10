@@ -1,20 +1,13 @@
 package data
 
 import (
-	"strconv"
-	"strings"
+	"database/sql"
+	"errors"
 	"time"
 
+	"github.com/lib/pq"
 	"greenlight.hosseinnasiri.ir/internal/validator"
 )
-
-type Genres []string
-
-func (g Genres) MarshalJSON() ([]byte, error) {
-	output := "[" + strings.Join(g, ",") + "]"
-	outputWithQuote := strconv.Quote(output)
-	return []byte(outputWithQuote), nil
-}
 
 type Movie struct {
 	ID        int64       `json:"id"`
@@ -22,7 +15,7 @@ type Movie struct {
 	Title     string      `json:"title"`
 	Year      int32       `json:"year,omitempty"`
 	Runtime   Runtime     `json:"runtime"`
-	Genres    Genres      `json:"genres"`
+	Genres    []string    `json:"genres"`
 	Version   interface{} `json:"version"`
 }
 
@@ -42,4 +35,52 @@ func ValidateMovie(v *validator.Validator, movie *Movie) {
 	// Note that we're using the Unique helper in the line below to check that all
 	// values in the movie.Genres slice are unique.
 	v.Check(validator.Unique(movie.Genres), "genres", "must not contain duplicate values")
+}
+
+type MovieModel struct {
+	DB *sql.DB
+}
+
+func (m MovieModel) Insert(movie *Movie) error {
+	query := `
+	INSERT INTO movies (title, year, runtime, genres)
+	VALUES ($1, $2, $3, $4)
+	RETURNING id, created_at, version`
+
+	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+}
+
+func (m MovieModel) Get(id int64) (*Movie, error) {
+	if id < 1 {
+		return nil, ErrRecordNotFound
+	}
+
+	var movie Movie
+	query := `
+	SELECT id, created_at, title, year, runtime, genres, version 
+	FROM movies
+	WHERE id = $1`
+
+	err := m.DB.QueryRow(query, id).Scan(&movie.ID, &movie.CreatedAt, &movie.Title, &movie.Year, &movie.Runtime, pq.Array(&movie.Genres), &movie.Version)
+
+	if err != nil {
+		switch {
+		case errors.Is(err, sql.ErrNoRows):
+			return nil, ErrRecordNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return &movie, nil
+}
+
+func (m MovieModel) Update(movie *Movie) error {
+	return nil
+}
+
+func (m MovieModel) Delete(id int64) error {
+	return nil
 }
