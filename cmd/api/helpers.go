@@ -44,6 +44,15 @@ func (app *application) writeJSON(w http.ResponseWriter, status int, data interf
 	return nil
 }
 
+func (app *application) writeResponseCreated201(w http.ResponseWriter, data interface{}, header http.Header) error {
+	response := map[string]interface{}{
+		"status": "OK",
+		"data":   data,
+	}
+
+	return app.writeJSON(w, http.StatusCreated, response, header)
+}
+
 func (app *application) writeResponse(w http.ResponseWriter, data interface{}, header http.Header) error {
 	response := map[string]interface{}{
 		"status": "OK",
@@ -51,27 +60,6 @@ func (app *application) writeResponse(w http.ResponseWriter, data interface{}, h
 	}
 
 	return app.writeJSON(w, http.StatusOK, response, header)
-}
-
-func (app *application) writeError(w http.ResponseWriter, error interface{}, status int, header http.Header) error {
-
-	response := map[string]interface{}{
-		"status": "ERROR",
-		"data":   error,
-	}
-
-	err := app.writeJSON(w, status, response, header)
-
-	if err != nil {
-		return err
-	}
-	http.Error(w, "", status)
-
-	return nil
-}
-
-func (a *application) badRequestResponse(w http.ResponseWriter, err error, headers http.Header) {
-	a.writeError(w, err.Error(), http.StatusBadRequest, headers)
 }
 
 func (a *application) readJSON(w http.ResponseWriter, r *http.Request, dst interface{}) error {
