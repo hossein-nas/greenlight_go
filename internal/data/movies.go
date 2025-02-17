@@ -1,8 +1,10 @@
 package data
 
 import (
+	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/lib/pq"
@@ -47,20 +49,27 @@ func (m MovieModel) Insert(movie *Movie) error {
 	VALUES ($1, $2, $3, $4)
 	RETURNING id, created_at, version`
 
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
 	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
 
-	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
+	return m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
-func (m MovieModel) List() (*[]Movie, error) {
-	var movies []Movie
+func (m MovieModel) List(title string, genres []string, filters Filters) (*[]Movie, error) {
 	query := `
 	SELECT id, created_at, title, year, runtime, genres, version 
 	FROM movies
+	WHERE (LOWER(title) ~* LOWER($1) OR $1 = '')
+	AND (genres @> $2 or $2 = '{}')
+	ORDER BY id
 	`
 
-	rows, err := m.DB.Query(query)
-	defer rows.Close()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	rows, err := m.DB.QueryContext(ctx, query, title, pq.Array(genres))
 
 	if err != nil {
 		switch {
@@ -70,6 +79,9 @@ func (m MovieModel) List() (*[]Movie, error) {
 			return nil, err
 		}
 	}
+	defer rows.Close()
+
+	movies := []Movie{}
 
 	for rows.Next() {
 		var movie Movie
@@ -105,7 +117,12 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 	FROM movies
 	WHERE id = $1`
 
-	err := m.DB.QueryRow(query, id).Scan(&movie.ID, &movie.CreatedAt, &movie.Title, &movie.Year, &movie.Runtime, pq.Array(&movie.Genres), &movie.Version)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := m.DB.QueryRowContext(ctx, query, id).Scan(&movie.ID, &movie.CreatedAt, &movie.Title, &movie.Year, &movie.Runtime, pq.Array(&movie.Genres), &movie.Version)
+
+	fmt.Println(err)
 
 	if err != nil {
 		switch {
@@ -134,8 +151,10 @@ func (m MovieModel) Update(movie *Movie) error {
 		movie.ID,
 		movie.Version,
 	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 
-	err := m.DB.QueryRow(query, args...).Scan(&movie.Version)
+	err := m.DB.QueryRowContext(ctx, query, args...).Scan(&movie.Version)
 
 	if err != nil {
 		switch {
@@ -155,7 +174,10 @@ func (m MovieModel) Delete(id int64) error {
 	WHERE id = $1
 	`
 
-	result, err := m.DB.Exec(query, id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	result, err := m.DB.ExecContext(ctx, query, id)
 
 	if err != nil {
 		return err

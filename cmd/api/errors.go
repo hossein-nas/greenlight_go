@@ -6,6 +6,7 @@ import (
 )
 
 func (app *application) writeError(w http.ResponseWriter, error interface{}, status int, header http.Header) error {
+	app.logger.Println(error)
 
 	response := map[string]interface{}{
 		"status": "ERROR",
@@ -17,7 +18,6 @@ func (app *application) writeError(w http.ResponseWriter, error interface{}, sta
 	if err != nil {
 		return err
 	}
-	http.Error(w, "", status)
 
 	return nil
 }
@@ -32,7 +32,7 @@ func (a *application) notFoundResponse(w http.ResponseWriter, headers http.Heade
 
 func (a *application) serverErrorResponse(w http.ResponseWriter, msg interface{}, headers http.Header) {
 	if msg == nil {
-		msg = errors.New("server can not responded").Error()
+		msg = errors.New("server can not respond right now. please try again later").Error()
 	}
 
 	a.writeError(w, msg, http.StatusNotFound, headers)
