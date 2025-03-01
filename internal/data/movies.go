@@ -112,7 +112,7 @@ func (m MovieModel) List(title string,
 		return nil, Metadata{}, err
 	}
 
-	metadata := calcaulateMetadata(totalRecords, filters.Page, filters.PageSize)
+	metadata := calculateMetadata(totalRecords, filters.Page, filters.PageSize)
 
 	return &movies, metadata, nil
 }
