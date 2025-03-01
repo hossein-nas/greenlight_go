@@ -97,7 +97,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 	input.Genres = app.readCSV(qs, "genres", []string{})
 
 	input.Page = app.readInt(qs, "page", 1, v)
-	input.PageSize = app.readInt(qs, "page_size", 20, v)
+	input.PageSize = app.readInt(qs, "page_size", 12, v)
 
 	input.Sort = app.readString(qs, "sort", "id")
 	input.SortSafeList = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
@@ -109,7 +109,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 
 	app.logger.Printf("%+v\n", input)
 
-	movies, err := app.models.Movies.List(input.Title, input.Genres, input.Filters)
+	movies, metadata, err := app.models.Movies.List(input.Title, input.Genres, input.Filters)
 
 	if err != nil {
 		switch {
@@ -121,7 +121,12 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	err = app.writeResponse(w, movies, nil)
+	envelope := map[string]interface{}{
+		"metadata": metadata,
+		"movies":   movies,
+	}
+
+	err = app.writeResponse(w, envelope, nil)
 
 	if err != nil {
 		errMsg := fmt.Errorf("the server encountered a problem and could not process your request. %s", err)
