@@ -107,7 +107,7 @@ func (app *application) listMoviesHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	app.logger.Printf("%+v\n", input)
+	app.logger.PrintInfo(fmt.Sprintf("%+v\n", input), nil)
 
 	movies, metadata, err := app.models.Movies.List(input.Title, input.Genres, input.Filters)
 

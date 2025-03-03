@@ -3,14 +3,23 @@ package main
 import (
 	"errors"
 	"net/http"
+
+	"greenlight.hosseinnasiri.ir/internal/jsonlog"
 )
 
-func (app *application) writeError(w http.ResponseWriter, error interface{}, status int, header http.Header) error {
-	app.logger.Println(error)
+func (app *application) logError(r *http.Request, err error) {
+	app.logger.PrintError(err, jsonlog.LoggerProperties{
+		"request_method": r.Method,
+		"request_url":    r.URL.String(),
+	})
+}
+
+func (app *application) writeError(w http.ResponseWriter, _err interface{}, status int, header http.Header) error {
+	app.logger.PrintError(_err.(error), jsonlog.LoggerProperties{})
 
 	response := map[string]interface{}{
 		"status": "ERROR",
-		"data":   error,
+		"data":   _err,
 	}
 
 	err := app.writeJSON(w, status, response, header)
