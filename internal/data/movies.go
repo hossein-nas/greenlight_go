@@ -141,8 +141,6 @@ func (m MovieModel) Get(id int64) (*Movie, error) {
 		&movie.Version,
 	)
 
-	fmt.Println(err)
-
 	if err != nil {
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
