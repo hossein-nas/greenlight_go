@@ -72,7 +72,7 @@ while [ $TOTAL_SEEDED -lt $MAX_ITEMS ]; do
         fi
 
         # Small delay to avoid overwhelming the server
-        sleep 0.2
+        sleep 0.05
     done
 
     # Increment page for next batch
