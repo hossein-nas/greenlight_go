@@ -17,7 +17,10 @@ build:
 
 # Run the Go project
 run: build
-	./$(BINARY)
+	./$(BINARY) -pretty-logger $(ARGS)
+
+run-limiter-off: build
+	./$(BINARY) -pretty-logger -limiter-enabled=false
 
 # Run tests
 test:

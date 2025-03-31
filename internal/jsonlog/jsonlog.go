@@ -3,6 +3,7 @@ package jsonlog
 import (
 	"encoding/json"
 	"io"
+	"os"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -34,13 +35,15 @@ type Logger struct {
 	out      io.Writer
 	minLevel Level
 	mu       sync.Mutex
+	pretty   bool
 }
 
-func New(out io.Writer, minLevel Level) *Logger {
+func New(out io.Writer, minLevel Level, pretty bool) *Logger {
 
 	return &Logger{
 		out:      out,
 		minLevel: minLevel,
+		pretty:   pretty,
 	}
 }
 
@@ -56,6 +59,7 @@ func (l *Logger) PrintError(err error, properties map[string]string) {
 
 func (l *Logger) PrintFatal(err error, properties map[string]string) {
 	l.print(LevelFatal, err.Error(), properties)
+	os.Exit(1)
 }
 
 func (l *Logger) print(level Level, message string, properties map[string]string) (int, error) {
@@ -81,8 +85,13 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 	}
 
 	var line []byte
+	var err error
 
-	line, err := json.Marshal(aux)
+	if l.pretty {
+		line, err = json.MarshalIndent(aux, "", "  ")
+	} else {
+		line, err = json.Marshal(aux)
+	}
 
 	if err != nil {
 		line = []byte(LevelError.String() + ": unable to marshal log message: " + err.Error())

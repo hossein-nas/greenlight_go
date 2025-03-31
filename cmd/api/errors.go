@@ -2,9 +2,11 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"greenlight.hosseinnasiri.ir/internal/jsonlog"
+	"greenlight.hosseinnasiri.ir/internal/utils"
 )
 
 func (app *application) logError(r *http.Request, err error) {
@@ -15,16 +17,24 @@ func (app *application) logError(r *http.Request, err error) {
 }
 
 func (app *application) writeError(w http.ResponseWriter, _err interface{}, status int, header http.Header) error {
-	app.logger.PrintError(_err.(error), jsonlog.LoggerProperties{})
+	var data = ""
+
+	if utils.CheckError(_err) {
+		data = _err.(error).Error()
+	} else {
+		data = _err.(string)
+	}
+	app.logger.PrintError(errors.New(data), jsonlog.LoggerProperties{})
 
 	response := map[string]interface{}{
 		"status": "ERROR",
-		"data":   _err,
+		"data":   data,
 	}
 
 	err := app.writeJSON(w, status, response, header)
 
 	if err != nil {
+		fmt.Println(" ERROR: " + "err")
 		return err
 	}
 
@@ -55,4 +65,10 @@ func (app *application) editConflictResponse(w http.ResponseWriter, headers http
 	message := "unable to update the record due to an edit conflict, please try again"
 
 	app.writeError(w, message, http.StatusConflict, headers)
+}
+
+func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
+
+	message := "rate limit exceeded"
+	app.writeError(w, message, http.StatusTooManyRequests, nil)
 }

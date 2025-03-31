@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
 	"os"
 	"time"
 
@@ -26,6 +24,13 @@ type config struct {
 		maxOpenConns int
 		maxIdleTime  string
 	}
+	prettyLogger bool
+
+	limiter struct {
+		rps     float64
+		burst   int
+		enabled bool
+	}
 }
 
 type application struct {
@@ -43,9 +48,13 @@ func main() {
 	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
 	flag.IntVar(&cfg.db.maxIdleConns, "db-max-idle-conns", 25, "PostgreSQL max idle connections")
 	flag.StringVar(&cfg.db.maxIdleTime, "db-max-idle-time", "15m", "PostgreSQL max connection idle time")
+	flag.BoolVar(&cfg.prettyLogger, "pretty-logger", false, "Whether should print logs in pretty format or not")
+	flag.Float64Var(&cfg.limiter.rps, "limiter-rps", 10, "Rate limiter maximum requests per second")
+	flag.IntVar(&cfg.limiter.burst, "limiter-burst", 10, "Rate limiter maximum burst")
+	flag.BoolVar(&cfg.limiter.enabled, "limiter-enabled", true, "Enable rate limiter")
 	flag.Parse()
 
-	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo)
+	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo, cfg.prettyLogger)
 
 	db, err := openDB(cfg)
 
@@ -62,23 +71,11 @@ func main() {
 		models: data.NewModels(db),
 	}
 
-	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%d", cfg.port),
-		Handler:      app.routes(),
-		ErrorLog:     log.New(logger, "", 0),
-		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+	err = app.serve()
+
+	if err != nil {
+		logger.PrintFatal(err, nil)
 	}
-
-	logger.PrintInfo("starting server ...", jsonlog.LoggerProperties{
-		"env":  cfg.env,
-		"addr": srv.Addr,
-	})
-
-	err = srv.ListenAndServe()
-
-	logger.PrintFatal(err, nil)
 }
 
 func openDB(cfg config) (*sql.DB, error) {

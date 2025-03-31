@@ -7,13 +7,14 @@ import (
 	"greenlight.hosseinnasiri.ir/internal/validator"
 )
 
+// Metadata struct
 type Metadata struct {
 	CurrentPage  int  `json:"current_page,omitempty"`
 	PageSize     int  `json:"page_size,omitempty"`
 	FirstPage    int  `json:"first_page,omitempty"`
 	LastPage     int  `json:"last_page,omitempty"`
-	IsFirstPage  bool `json:"isFirstPage"`
-	IsLastPage   bool `json:"isLastPage"`
+	IsFirstPage  bool `json:"is_first_page"`
+	IsLastPage   bool `json:"is_last_page"`
 	TotalRecords int  `json:"total_records,omitempty"`
 }
 
