@@ -9,9 +9,9 @@ import (
 func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
-	location, error := time.LoadLocation("Asia/Tehran")
+	location, err := time.LoadLocation("Asia/Tehran")
 
-	if error != nil {
+	if err != nil {
 		http.Error(w, "Loading timezone errored.", http.StatusInternalServerError)
 		return
 	}
@@ -25,7 +25,7 @@ func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Reques
 		"byte":        []byte{'h', 'e', 'l', 'l', 'o'},
 	}
 
-	err := app.writeResponse(w, data, nil)
+	err = app.writeResponse(w, data, nil)
 
 	if err != nil {
 		errMsg := fmt.Errorf("the server encountered a problem and could not process your request. %s", err)
