@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"greenlight.hosseinnasiri.ir/internal/jsonlog"
 	"greenlight.hosseinnasiri.ir/internal/utils"
@@ -17,14 +18,16 @@ func (app *application) logError(r *http.Request, err error) {
 }
 
 func (app *application) writeError(w http.ResponseWriter, _err interface{}, status int, header http.Header) error {
-	var data = ""
+	var data interface{} = ""
 
 	if utils.CheckError(_err) {
 		data = _err.(error).Error()
-	} else {
+	} else if reflect.TypeOf(_err).Kind() == reflect.String {
 		data = _err.(string)
+		app.logger.PrintError(errors.New(data.(string)), jsonlog.LoggerProperties{})
+	} else {
+		data = _err
 	}
-	app.logger.PrintError(errors.New(data), jsonlog.LoggerProperties{})
 
 	response := map[string]interface{}{
 		"status": "ERROR",
