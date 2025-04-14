@@ -13,6 +13,8 @@ import (
 	"greenlight.hosseinnasiri.ir/internal/validator"
 )
 
+var AnonymousUser = &User{}
+
 var (
 	ErrDuplicateEmail = errors.New("duplicate email")
 )
@@ -25,6 +27,10 @@ type User struct {
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
 	Version   int       `json:"-"`
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 type password struct {

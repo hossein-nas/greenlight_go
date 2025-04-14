@@ -70,6 +70,19 @@ func (app *application) editConflictResponse(w http.ResponseWriter, headers http
 	app.writeError(w, message, http.StatusConflict, headers)
 }
 
+func (app *application) invalidCredentialsResponse(w http.ResponseWriter, headers http.Header) {
+	message := "invalid authentication credentials"
+
+	app.writeError(w, message, http.StatusUnauthorized, headers)
+}
+
+func (app *application) invalidAuthenticationResponse(w http.ResponseWriter, headers http.Header) {
+	w.Header().Set("WWW-Authenticate", "Bearer")
+	message := "invalid or missing authentication token"
+
+	app.writeError(w, message, http.StatusUnauthorized, headers)
+}
+
 func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http.Request) {
 
 	message := "rate limit exceeded"
