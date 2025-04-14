@@ -9,6 +9,7 @@ import (
 	"github.com/go-mail/mail/v2"
 )
 
+//go:embed "templates"
 var templateFS embed.FS
 
 type Mailer struct {
@@ -34,9 +35,7 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 	}
 
 	subject := new(bytes.Buffer)
-
 	err = tmpl.ExecuteTemplate(subject, "subject", data)
-
 	if err != nil {
 		return err
 	}
@@ -56,9 +55,9 @@ func (m Mailer) Send(recipient, templateFile string, data interface{}) error {
 	msg := mail.NewMessage()
 	msg.SetHeader("To", recipient)
 	msg.SetHeader("From", m.sender)
-	msg.SetHeader("To", subject.String())
+	msg.SetHeader("Subject", subject.String())
 	msg.SetBody("text/plain", plainBody.String())
-	msg.AddAlternative("text/plain", plainBody.String())
+	msg.AddAlternative("text/html", htmlBody.String())
 
 	err = m.dialer.DialAndSend(msg)
 
