@@ -88,3 +88,18 @@ func (app *application) rateLimitExceededResponse(w http.ResponseWriter, r *http
 	message := "rate limit exceeded"
 	app.writeError(w, message, http.StatusTooManyRequests, nil)
 }
+
+func (app *application) authenticationRequireResponse(w http.ResponseWriter, headers http.Header) {
+	message := "you must be authenticated to access this resource"
+	app.writeError(w, message, http.StatusUnauthorized, headers)
+}
+
+func (app *application) inactiveAccountResponse(w http.ResponseWriter, headers http.Header) {
+	message := "your user account must be activated to access this resource"
+	app.writeError(w, message, http.StatusForbidden, headers)
+}
+
+func (app *application) notPermittedResponse(w http.ResponseWriter, headers http.Header) {
+	message := "your user account doesn't have the necessary permissions to access this source"
+	app.writeError(w, message, http.StatusForbidden, headers)
+}

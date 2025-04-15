@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"expvar"
 	"fmt"
 	"net"
 	"net/http"
@@ -132,5 +133,64 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 
 		r = app.contextSetUser(r, user)
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (app *application) requireActivatedUser(next http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		if user.IsAnonymous() {
+			app.authenticationRequireResponse(w, nil)
+			return
+		}
+
+		if !user.Activated {
+			app.inactiveAccountResponse(w, nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+
+	})
+}
+
+func (app *application) requirePermission(code string, next http.HandlerFunc) http.HandlerFunc {
+	fn := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user := app.contextGetUser(r)
+
+		permissions, err := app.models.Permissions.GetAllForUser(user.ID)
+
+		if err != nil {
+			app.serverErrorResponse(w, err, nil)
+			return
+		}
+
+		if !permissions.Include(code) {
+			app.notPermittedResponse(w, nil)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+
+	})
+
+	return app.requireActivatedUser(fn)
+}
+
+func (app *application) metrics(next http.Handler) http.Handler {
+	totalRequestsReceived := expvar.NewInt("total_requests_received")
+	totalResponseSent := expvar.NewInt("total_response_sent")
+	totalProcessingTimeMicroseconds := expvar.NewInt("total_processing_time_ms")
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+		totalRequestsReceived.Add(1)
+
+		next.ServeHTTP(w, r)
+
+		totalResponseSent.Add(1)
+		duration := time.Since(start).Microseconds()
+
+		totalProcessingTimeMicroseconds.Add(duration)
 	})
 }
