@@ -11,6 +11,9 @@ MIGRATIONS_DIR = ./migrations
 # Default target: build the project
 all: build
 
+confirm:
+	@echo 'Are you sure? [y/N] '; read -r ans; [ "$${ans:-N}" = "y" ]
+
 # Build the Go binary
 build:
 	$(GO) build -o $(BINARY) ./cmd/api # Adjust the path to your main file if different
@@ -34,15 +37,15 @@ clean:
 	rm -f $(BINARY)
 
 # Apply migrations (up)
-migration:
+migration: confirm
 	$(MIGRATE) create -seq -ext=.sql -dir $(MIGRATIONS_DIR) ${name}
 
-migrate-up:
+migrate-up: confirm
 	$(MIGRATE) -path $(MIGRATIONS_DIR) -database $(DB_URL) up
 
 # Roll back migrations (down)
-migrate-down:
+migrate-down: confirm
 	$(MIGRATE) -path $(MIGRATIONS_DIR) -database $(DB_URL) down
 
-migrate-down-1:
+migrate-down-1: confirm
 	$(MIGRATE) -path $(MIGRATIONS_DIR) -database $(DB_URL) down 1
