@@ -183,7 +183,7 @@ func (m UserModel) Update(user *User) error {
 
 	if err != nil {
 		if pqError, ok := err.(pq.Error); ok {
-			return fmt.Errorf("Error:: Code: %s , Msg: %s", pqError.Code, pqError.Message)
+			return fmt.Errorf("error:: code: %s , msg: %s", pqError.Code, pqError.Message)
 		} else {
 			switch {
 			case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:

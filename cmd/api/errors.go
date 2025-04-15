@@ -10,12 +10,12 @@ import (
 	"greenlight.hosseinnasiri.ir/internal/utils"
 )
 
-func (app *application) logError(r *http.Request, err error) {
-	app.logger.PrintError(err, jsonlog.LoggerProperties{
-		"request_method": r.Method,
-		"request_url":    r.URL.String(),
-	})
-}
+// func (app *application) logError(r *http.Request, err error) {
+// 	app.logger.PrintError(err, jsonlog.LoggerProperties{
+// 		"request_method": r.Method,
+// 		"request_url":    r.URL.String(),
+// 	})
+// }
 
 func (app *application) writeError(w http.ResponseWriter, _err interface{}, status int, header http.Header) error {
 	var data interface{} = ""

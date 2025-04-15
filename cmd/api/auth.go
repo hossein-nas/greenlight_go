@@ -62,7 +62,7 @@ func (app *application) createSignin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = app.writeJSON(w, http.StatusCreated, map[string]interface{}{
+	app.writeJSON(w, http.StatusCreated, map[string]interface{}{
 		"authentication_token": token,
 	}, nil)
 }

@@ -26,7 +26,7 @@ func (app *application) resendActivationCodeHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	if user.Activated == true {
+	if user.Activated {
 		app.writeResponse(w, "resent successfully", nil)
 		return
 	}
