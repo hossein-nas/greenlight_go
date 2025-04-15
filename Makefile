@@ -69,3 +69,10 @@ vendor:
 	go mod verify
 	@echo 'Vendoring dependencies...'
 	go mod vendor
+
+
+.PHONY: build/api
+build/api:
+	@echo 'Bulding cmd/api...'
+	go build -ldflags='-s' -o=./bin/api ./cmd/api
+	GOOS=linux GOARCH=amd64 go build -ldflags='-s' -o=./bin/linx_amd64/api ./cmd/api
