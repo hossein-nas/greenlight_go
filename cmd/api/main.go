@@ -17,7 +17,10 @@ import (
 	"greenlight.hosseinnasiri.ir/internal/mailer"
 )
 
-const version = "1.0.0"
+var (
+	buildTime string
+	version   string
+)
 
 type config struct {
 	port int
@@ -72,7 +75,14 @@ func main() {
 	flag.StringVar(&cfg.smtp.username, "smtp-username", "condescending_haibt_77qvr2", "SMTP username")
 	flag.StringVar(&cfg.smtp.password, "smtp-password", "25631b04-38fc-43ed-b12f-1f43a697682d", "SMTP password")
 	flag.StringVar(&cfg.smtp.sender, "smtp-sender", "Greenlight <admin@echa.ir>", "SMTP sender")
+	displayVersion := flag.Bool("version", false, "Display versions and exit")
 	flag.Parse()
+
+	if *displayVersion {
+		fmt.Printf("Version:\t%s\n", version)
+		fmt.Printf("Build time:\t%s\n", buildTime)
+		os.Exit(0)
+	}
 
 	logger := jsonlog.New(os.Stdout, jsonlog.LevelInfo, cfg.prettyLogger)
 
