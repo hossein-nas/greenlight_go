@@ -52,10 +52,7 @@ migrate-down-1: confirm
 
 
 .PHONY: audit
-audit:
-	@echo "Tidying and verifying module dependencies..."
-	go mod tidy
-	go mod verify
+audit: vendor
 	@echo 'Formatting code...'
 	go fmt ./...
 	@echo 'Vetting code...'
